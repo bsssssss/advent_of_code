@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char **argv) {
-
-    FILE *file = fopen(argv[1], "r");
+int main(int argc, char** argv)
+{
+    FILE* file = fopen(argv[1], "r");
 
     if (file == NULL) {
         fprintf(stderr, "could not open file\n");
@@ -12,8 +12,8 @@ int main(int argc, char **argv) {
     }
 
     char line[256];
-    int position = 50;
-    int zero_count = 0;
+    int  position   = 50;
+    int  zero_count = 0;
 
     while (fgets(line, sizeof(line), file)) {
         if (line[0] == '\n') {
@@ -36,7 +36,6 @@ int main(int argc, char **argv) {
         if (position == 0) {
             zero_count++;
         }
-
     }
     fclose(file);
 
