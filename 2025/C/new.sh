@@ -15,7 +15,7 @@ bin:
 	mkdir -p bin
 
 bin/solution: solution.c
-	gcc \$(CFLAGS) $< -o $@
+	gcc \$(CFLAGS) \$< -o \$@
 
 clean:
 	rm -rf bin
@@ -24,7 +24,9 @@ EOF
 cat > $dirname/solution.c << EOF
 #include <stdio.h>
 
-int main(int argc, char** argv) {}
+int main(int argc, char** argv) 
+{
+}
 EOF
 
 cat > $dirname/notes.md << EOF
