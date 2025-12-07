@@ -7,13 +7,7 @@ int is_invalid_id(long id)
     char id_str[256];
     sprintf(id_str, "%ld", id);
 
-    char c      = *id_str;
-    int  length = 0;
-
-    while (c != '\0') {
-        length++;
-        c = id_str[length];
-    }
+    unsigned long length = strlen(id_str);
 
     if (length % 2 == 0) {
         char first_half_str[256];
