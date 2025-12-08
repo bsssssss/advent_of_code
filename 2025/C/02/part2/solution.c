@@ -10,11 +10,13 @@
  * prend un mot de <n> charactères,
  * le divise en <divisor> mots de <n> / <divisor> charactères
  * retourne un tableau de ces mots (transformés en nombres)
+ *
+ * le tableau est initialisé par le caller, et on recupere 
+ * son pointeur comme argument
  */
 
-long* chunk_id(char* id_str, long divisor)
+long* chunk_id(char* id_str, long divisor, long* output_array)
 {
-    static long arr[MAX_LONG_STR];
     long length = strlen(id_str);
 
     for (long i = 0; i < divisor; i++) {
@@ -23,13 +25,17 @@ long* chunk_id(char* id_str, long divisor)
         long chunk_size = length / divisor;
 
         strncpy(chunk_str, id_str + (i * chunk_size), chunk_size);
+
+        // Always ensure string is null terminated
+        chunk_str[chunk_size] = '\0';
+
         chunk = strtol(chunk_str, NULL, 10);
         // printf("chunk %d: %ld\n", i, chunk);
 
-        arr[i] = chunk;
+        output_array[i] = chunk;
     }
 
-    return arr;
+    return output_array;
 }
 
 bool is_invalid_id(long id)
@@ -38,22 +44,22 @@ bool is_invalid_id(long id)
     sprintf(id_str, "%ld", id);
 
     unsigned long length = strlen(id_str);
+    bool result = false;
 
+    // ids of length 1 are always valid
     if (length < 2) {
-        return false;
+        return result;
     }
 
-    bool result = false;
     for (long d = 2; d <= length; d++) {
         if (length % d == 0) {
+            long chunked[d];
             // printf("testing %s, divided in %ld chunks\n", id_str, d);
-            long* seq_arr = chunk_id(id_str, d);
+            long* seq_arr = chunk_id(id_str, d, chunked);
 
-            for (long i = 0; i < d - 1; i++) {
-                if (seq_arr[i] == seq_arr[i + 1]) {
-                    result = true;
-                }
-                else {
+            result = true;
+            for (long i = 1; i < d; i++) {
+                if (seq_arr[i] != seq_arr[0]) {
                     result = false;
                     break;
                 }
