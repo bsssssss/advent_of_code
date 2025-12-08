@@ -6,25 +6,72 @@
 #define MAX_LONG_STR 32
 #define MAX_LINE_LEN 4096
 
+/*
+ * prend un mot de <n> charactères,
+ * le divise en <divisor> mots de <n> / <divisor> charactères
+ * retourne un tableau de ces mots (transformés en nombres)
+ */
+
+long* chunk_id(char* id_str, long divisor)
+{
+    static long arr[MAX_LONG_STR];
+    long length = strlen(id_str);
+
+    for (long i = 0; i < divisor; i++) {
+        char chunk_str[MAX_LONG_STR];
+        long chunk;
+        long chunk_size = length / divisor;
+
+        strncpy(chunk_str, id_str + (i * chunk_size), chunk_size);
+        chunk = strtol(chunk_str, NULL, 10);
+        // printf("chunk %d: %ld\n", i, chunk);
+
+        arr[i] = chunk;
+    }
+
+    return arr;
+}
+
 bool is_invalid_id(long id)
 {
     char id_str[MAX_LONG_STR];
-
     sprintf(id_str, "%ld", id);
+
     unsigned long length = strlen(id_str);
 
     if (length < 2) {
         return false;
     }
 
-    printf("testing %s\n", id_str);
+    bool result = false;
+    for (long d = 2; d <= length; d++) {
+        if (length % d == 0) {
+            // printf("testing %s, divided in %ld chunks\n", id_str, d);
+            long* seq_arr = chunk_id(id_str, d);
 
-    return false;
+            for (long i = 0; i < d - 1; i++) {
+                if (seq_arr[i] == seq_arr[i + 1]) {
+                    result = true;
+                }
+                else {
+                    result = false;
+                    break;
+                }
+            }
+
+            if (result) {
+                // printf("found invalid id: %ld\n", id);
+                return result;
+            }
+        }
+    }
+
+    return result;
 }
 
 long process_range(char* range)
 {
-    printf("range : %s\n", range);
+    // printf("range : %s\n", range);
 
     long start_id = strtol(strsep(&range, "-"), NULL, 10);
     long end_id = strtol(range, NULL, 10);
@@ -49,13 +96,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    char  buf_line[MAX_LINE_LEN];
+    char buf_line[MAX_LINE_LEN];
     char* line = fgets(buf_line, sizeof(buf_line), file_handle);
 
     buf_line[strcspn(buf_line, "\n")] = '\0';
 
     const char* range_sep = ",";
-    char*       range_token = strsep(&line, range_sep);
+    char* range_token = strsep(&line, range_sep);
 
     long result = 0;
 
