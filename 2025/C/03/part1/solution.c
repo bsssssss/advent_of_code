@@ -1,10 +1,17 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 
 int calculate_joltage(char* bank) 
 {
+    int joltage = 0;
+    int number_of_batteries = strlen(bank);
 
+    for (int i = 0; i < number_of_batteries; i++) {
+    }
+
+    return joltage;
 }
 
 int main(int argc, char* argv[])
@@ -23,6 +30,7 @@ int main(int argc, char* argv[])
     while (fgets(line, sizeof(line), file_handle)) {
         line[strcspn(line, "\n")] = '\0';
         printf("calculating joltage of %s\n", line);
+        result += calculate_joltage(line);
     }
 
     printf("total joltage: %d\n", result);
