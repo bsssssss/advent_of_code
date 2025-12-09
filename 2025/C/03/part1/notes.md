@@ -52,7 +52,7 @@ each bank; what is the total output joltage?
 INITIALIZE total_joltage to 0
 
 - FOR EACH lines
-  - INITIALIZE bank_joltage string
+  - INITIALIZE `bank_joltage` string
   - first pass
     * FOR EACH character in line minus one character
       * find maximum

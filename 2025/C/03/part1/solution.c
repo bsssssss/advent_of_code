@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+int calculate_bank_joltage(char* bank)
+{
+    int joltage = 0;
+    int bank_length = strlen(bank);
+
+    return joltage;
+}
+
 int main(int argc, char* argv[])
 {
     FILE* file_handle;
@@ -16,12 +24,11 @@ int main(int argc, char* argv[])
     int result = 0;
 
     while (fgets(line, sizeof(line), file_handle)) {
-        int arr_int[256];
-
         // strip out new line char at the end
         line[strcspn(line, "\n")] = '\0';
 
-        printf("calculating joltage of %s...\n", line);
+        int bank_joltage = calculate_bank_joltage(line);
+        result += bank_joltage;
     }
 
     printf("total joltage: %d\n", result);
