@@ -7,7 +7,7 @@ dirname=$(printf "%.2d" $(($dir_count + 1)))/part1
 mkdir -p $dirname
 
 cat > $dirname/Makefile << EOF
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -fsanitize=address -fsanitize=leak
 
 all: bin bin/solution
 
@@ -24,7 +24,7 @@ EOF
 cat > $dirname/solution.c << EOF
 #include <stdio.h>
 
-int main(int argc, char** argv) 
+int main(int argc, char* argv[]) 
 {
 }
 EOF
