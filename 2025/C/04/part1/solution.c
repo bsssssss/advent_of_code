@@ -3,24 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INPUT_FILE "input.txt"
+#define INPUT_FILE "test.txt"
 
 typedef struct {
     char* contents[200];
     int   rows;
     int   cols;
 } Grid;
-
-void Grid_free(Grid* grid)
-{
-    if (!grid) return;
-
-    for (int i = 0; i < grid->rows; i++) {
-        free(grid->contents[i]);
-    }
-
-    free(grid);
-}
 
 int Grid_add_row(Grid* grid, char* row)
 {
@@ -55,6 +44,7 @@ void Grid_print(Grid* grid)
 Grid* Grid_create()
 {
     Grid* grid = malloc(sizeof(Grid));
+
     if (!grid) {
         printf("error: couldn't allocate memory for Grid\n");
         return NULL;
@@ -64,6 +54,19 @@ Grid* Grid_create()
     grid->cols = 0;
 
     return grid;
+}
+
+void Grid_free(Grid* grid)
+{
+    if (!grid) {
+        return;
+    }
+
+    for (int i = 0; i < grid->rows; i++) {
+        free(grid->contents[i]);
+    }
+
+    free(grid);
 }
 
 Grid* read_file(char* file)
@@ -97,7 +100,30 @@ Grid* read_file(char* file)
     }
 
     fclose(fh);
+
     return grid;
+}
+
+int is_roll(char c)
+{
+    if (c == '@') {
+        return 1;
+    }
+    return 0;
+}
+
+int is_valid_cell(Grid* grid, int row, int col)
+{
+    if (row >= 0 && row < grid->rows && col >= 0 && col < grid->cols) {
+        return 1;
+    }
+    return 0;
+}
+
+int count_rolls_around_cell(Grid* grid, int row, int col)
+{
+    int count = 0;
+    return count;
 }
 
 int main(int argc, char* argv[])
@@ -108,7 +134,27 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    Grid_print(grid);
+    // Grid_print(grid);
+
+    int accessible_rolls = 0;
+
+    for (int row = 0; row < grid->rows; row++) {
+        for (int col = 0; col < grid->cols; col++) {
+            char cell = grid->contents[row][col];
+
+            if (is_roll(cell)) {
+                int roll_neighbors = 0;
+
+                // TODO: count rolls around this cell
+
+                if (roll_neighbors < 4) {
+                    accessible_rolls++;
+                }
+            }
+        }
+    }
+
+    printf("%d accessible rolls in total\n", accessible_rolls);
 
     Grid_free(grid);
     return 0;
