@@ -14,70 +14,31 @@ typedef struct {
 
 int is_roll_cell(char c)
 {
-    if (c == '@') {
-        return 1;
-    }
-    return 0;
+    return c == '@';
 }
 
 int is_valid_cell(Grid* grid, int row, int col)
 {
-    if (row >= 0 && row < grid->rows && col >= 0 && col < grid->cols) {
-        return 1;
-    }
-    return 0;
+    return row >= 0 && row < grid->rows && col >= 0 && col < grid->cols;
 }
 
 int count_rolls_around_cell(Grid* grid, int row, int col)
 {
     int count = 0;
+    int directions[8][2] = {
+        { -1, -1 }, { -1, 0 }, { -1, 1 }, { 0, -1 },
+        { 0, 1 },   { 1, -1 }, { 1, 0 },  { 1, 1 },
 
-    // left
-    if (is_valid_cell(grid, row, col - 1)) {
-        if (is_roll_cell(grid->cells[row][col - 1])) {
-            count++;
-        }
-    }
-    // right
-    if (is_valid_cell(grid, row, col + 1)) {
-        if (is_roll_cell(grid->cells[row][col + 1])) {
-            count++;
-        }
-    }
-    // up left
-    if (is_valid_cell(grid, row - 1, col - 1)) {
-        if (is_roll_cell(grid->cells[row - 1][col - 1])) {
-            count++;
-        }
-    }
-    // up right
-    if (is_valid_cell(grid, row - 1, col + 1)) {
-        if (is_roll_cell(grid->cells[row - 1][col + 1])) {
-            count++;
-        }
-    }
-    // down left
-    if (is_valid_cell(grid, row + 1, col - 1)) {
-        if (is_roll_cell(grid->cells[row + 1][col - 1])) {
-            count++;
-        }
-    }
-    // down right
-    if (is_valid_cell(grid, row + 1, col + 1)) {
-        if (is_roll_cell(grid->cells[row + 1][col + 1])) {
-            count++;
-        }
-    }
-    // up
-    if (is_valid_cell(grid, row - 1, col)) {
-        if (is_roll_cell(grid->cells[row - 1][col])) {
-            count++;
-        }
-    }
-    // down
-    if (is_valid_cell(grid, row + 1, col)) {
-        if (is_roll_cell(grid->cells[row + 1][col])) {
-            count++;
+    };
+
+    for (int i = 0; i < 8; i++) {
+        int nrow = row + directions[i][0];
+        int ncol = col + directions[i][1];
+
+        if (is_valid_cell(grid, nrow, ncol)) {
+            if (is_roll_cell(grid->cells[nrow][ncol])) {
+                count++;
+            }
         }
     }
 
@@ -206,11 +167,12 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    int removed_rolls = 0;
-
+    int  removed_rolls = 0;
     bool keep_going = true;
+
     while (keep_going) {
         int accessible_rolls = remove_accessible_rolls(grid);
+
         if (accessible_rolls <= 0) {
             keep_going = false;
         }
