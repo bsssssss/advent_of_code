@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INPUT_FILE "test.txt"
+#define INPUT_FILE "input.txt"
 
 typedef struct {
-    char* contents[200];
+    char* cells[200];
     int   rows;
     int   cols;
 } Grid;
@@ -18,9 +18,9 @@ int Grid_add_row(Grid* grid, char* row)
         return -1;
     }
 
-    grid->contents[grid->rows] = strdup(row);
+    grid->cells[grid->rows] = strdup(row);
 
-    if (!grid->contents[grid->rows]) {
+    if (!grid->cells[grid->rows]) {
         printf("error: couldn't add row to Grid\n");
         return -1;
     }
@@ -37,7 +37,7 @@ int Grid_add_row(Grid* grid, char* row)
 void Grid_print(Grid* grid)
 {
     for (int i = 0; i < grid->rows; i++) {
-        printf("%s\n", grid->contents[i]);
+        printf("%s\n", grid->cells[i]);
     }
 }
 
@@ -63,7 +63,7 @@ void Grid_free(Grid* grid)
     }
 
     for (int i = 0; i < grid->rows; i++) {
-        free(grid->contents[i]);
+        free(grid->cells[i]);
     }
 
     free(grid);
@@ -104,7 +104,7 @@ Grid* read_file(char* file)
     return grid;
 }
 
-int is_roll(char c)
+int is_roll_cell(char c)
 {
     if (c == '@') {
         return 1;
@@ -123,7 +123,77 @@ int is_valid_cell(Grid* grid, int row, int col)
 int count_rolls_around_cell(Grid* grid, int row, int col)
 {
     int count = 0;
+
+    // left
+    if (is_valid_cell(grid, row, col - 1)) {
+        if (is_roll_cell(grid->cells[row][col - 1])) {
+            count++;
+        }
+    }
+    // right
+    if (is_valid_cell(grid, row, col + 1)) {
+        if (is_roll_cell(grid->cells[row][col + 1])) {
+            count++;
+        }
+    }
+    // up left
+    if (is_valid_cell(grid, row - 1, col - 1)) {
+        if (is_roll_cell(grid->cells[row - 1][col - 1])) {
+            count++;
+        }
+    }
+    // up right
+    if (is_valid_cell(grid, row - 1, col + 1)) {
+        if (is_roll_cell(grid->cells[row - 1][col + 1])) {
+            count++;
+        }
+    }
+    // down left
+    if (is_valid_cell(grid, row + 1, col - 1)) {
+        if (is_roll_cell(grid->cells[row + 1][col - 1])) {
+            count++;
+        }
+    }
+    // down right
+    if (is_valid_cell(grid, row + 1, col + 1)) {
+        if (is_roll_cell(grid->cells[row + 1][col + 1])) {
+            count++;
+        }
+    }
+    // up
+    if (is_valid_cell(grid, row - 1, col)) {
+        if (is_roll_cell(grid->cells[row - 1][col])) {
+            count++;
+        }
+    }
+    // down
+    if (is_valid_cell(grid, row + 1, col)) {
+        if (is_roll_cell(grid->cells[row + 1][col])) {
+            count++;
+        }
+    }
+
     return count;
+}
+
+int count_accessible_rolls(Grid* grid)
+{
+    int accessible_rolls = 0;
+
+    for (int row = 0; row < grid->rows; row++) {
+        for (int col = 0; col < grid->cols; col++) {
+            char cell = grid->cells[row][col];
+
+            if (is_roll_cell(cell)) {
+                int roll_neighbors = count_rolls_around_cell(grid, row, col);
+                if (roll_neighbors < 4) {
+                    accessible_rolls++;
+                }
+            }
+        }
+    }
+
+    return accessible_rolls;
 }
 
 int main(int argc, char* argv[])
@@ -134,26 +204,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Grid_print(grid);
-
-    int accessible_rolls = 0;
-
-    for (int row = 0; row < grid->rows; row++) {
-        for (int col = 0; col < grid->cols; col++) {
-            char cell = grid->contents[row][col];
-
-            if (is_roll(cell)) {
-                int roll_neighbors = 0;
-
-                // TODO: count rolls around this cell
-
-                if (roll_neighbors < 4) {
-                    accessible_rolls++;
-                }
-            }
-        }
-    }
-
+    int accessible_rolls = count_accessible_rolls(grid);
     printf("%d accessible rolls in total\n", accessible_rolls);
 
     Grid_free(grid);
