@@ -7,7 +7,15 @@ dirname=$(printf "%.2d" $(($dir_count + 1)))/part1
 mkdir -p $dirname
 
 cat > $dirname/Makefile << "EOF"
-CFLAGS=-Wall -g -fsanitize=address -fsanitize=leak
+OS := $(shell uname -s)
+
+ifeq ($(OS), Darwin)
+	CC := clang
+	CFLAGS := -Wall -g -fsanitize=address
+else
+	CC := gcc
+	CFLAGS := -Wall -g -fsanitize=address -fsanitize=leak
+endif
 
 all: bin bin/solution
 
@@ -15,37 +23,15 @@ bin:
 	mkdir -p bin
 
 bin/solution: solution.c
-	gcc $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
 	rm -rf bin
 EOF
 
 cat > $dirname/solution.c << EOF
-#include <stdio.h>
-#include <string.h>
-
 int main(int argc, char* argv[]) 
-{
-    FILE* fh = fopen("input.txt", "r");
-
-    if (fh == NULL) {
-        printf("error: couldn't open file\n");
-        return 1;
-    }
-
-    char line[4096];
-    while (fgets(line, sizeof(line), fh)) {
-        if (line[0] == '\n') {
-            continue;
-        }
-        line[strcspn(line, "\n")] = '\0';
-        printf("%s\n", line);
-    }
-
-    fclose(fh);
-    return 0;
-}
+{}
 EOF
 
 cat > $dirname/notes.md << EOF
