@@ -30,7 +30,7 @@ clean:
 EOF
 
 cat > $dirname/solution.c << EOF
-int main(int argc, char* argv[]) 
+int main(void) 
 {}
 EOF
 
