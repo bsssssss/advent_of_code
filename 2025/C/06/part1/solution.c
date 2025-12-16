@@ -29,11 +29,23 @@ typedef struct {
 
 /**********************************************************************/
 
-void    die(Puzzle* p, char* message);
-void    puzzle_close(Puzzle* p);
-void    puzzle_parse(Puzzle* p);
-void    parse_line(Puzzle* p, char* line, size_t linecount);
+void die(Puzzle* p, char* message);
+
 Puzzle* puzzle_open(char* filename);
+void    puzzle_close(Puzzle* p);
+
+void puzzle_parse(Puzzle* p);
+void parse_line(Puzzle* p, char* line, size_t linecount);
+void parse_operators(OpRow* op_row, const char* line);
+void parse_numbers(NumRow* num_row, const char* line);
+
+void print_operators(const Puzzle* p);
+void print_numbers(const Puzzle* p);
+
+int is_operators_line(const char* line);
+int is_numbers_line(const char* line);
+
+int64_t calculate_total(const Puzzle* p);
 
 /**********************************************************************/
 
@@ -53,10 +65,9 @@ void die(Puzzle* p, char* message)
     exit(1);
 }
 
-void parse_op_line(OpRow* op_row, const char* line)
+void parse_operators(OpRow* op_row, const char* line)
 {
     const char* char_ptr = line;
-
     while (*char_ptr) {
         if (*char_ptr == '+' || *char_ptr == '*') {
             op_row->operators[op_row->len] = *char_ptr;
@@ -66,7 +77,7 @@ void parse_op_line(OpRow* op_row, const char* line)
     }
 }
 
-void parse_num_line(NumRow* num_row, const char* line)
+void parse_numbers(NumRow* num_row, const char* line)
 {
     const char* nptr   = line;
     char*       endptr = NULL;
@@ -78,9 +89,9 @@ void parse_num_line(NumRow* num_row, const char* line)
             if (num_row->len >= num_row->capacity) {
                 die(NULL, "too many numbers in row");
             }
-
             num_row->numbers[num_row->len] = val;
-            nptr                           = endptr;
+
+            nptr = endptr;
             num_row->len++;
         }
         else {
@@ -134,25 +145,24 @@ void puzzle_parse(Puzzle* p)
     ssize_t read;
 
     while ((read = getline(&lineptr, &len, p->file) != -1)) {
-
         if (is_numbers_line(lineptr)) {
+
             if (p->num_rows_len >= p->num_rows_capacity) {
                 die(p, "too many numbers rows");
             }
-
             NumRow* current = &p->num_rows[p->num_rows_len];
 
             current->len      = 0;
             current->capacity = 4096;
             current->numbers  = malloc(current->capacity * sizeof(int64_t));
 
-            parse_num_line(current, lineptr);
+            parse_numbers(current, lineptr);
             p->num_rows_len++;
         }
 
         else if (is_operators_line(lineptr)) {
             OpRow* current = &p->op_row;
-            parse_op_line(current, lineptr);
+            parse_operators(current, lineptr);
         }
     }
 
@@ -170,7 +180,6 @@ Puzzle* puzzle_open(char* filename)
     if (!fh) {
         die(p, "could not open file");
     }
-
     p->file = fh;
 
     p->num_rows_len      = 0;
@@ -195,7 +204,6 @@ Puzzle* puzzle_open(char* filename)
 void puzzle_close(Puzzle* p)
 {
     if (p) {
-
         if (p->file) {
             fclose(p->file);
         }
