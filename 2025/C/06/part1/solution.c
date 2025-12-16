@@ -49,30 +49,38 @@ void die(Puzzle* p, char* message)
     else {
         printf("ERROR: %s\n", message);
     }
+
+    exit(1);
 }
 
-void parse_op_line(OpRow* op_row, char* line)
+void parse_op_line(OpRow* op_row, const char* line)
 {
-    char* nptr = line;
-    while (*nptr) {
-        if (*nptr == '+' || *nptr == '*') {
-            op_row->operators[op_row->len] = *nptr;
+    const char* char_ptr = line;
+
+    while (*char_ptr) {
+        if (*char_ptr == '+' || *char_ptr == '*') {
+            op_row->operators[op_row->len] = *char_ptr;
             op_row->len++;
         }
-        nptr++;
+        char_ptr++;
     }
 }
 
-void parse_num_line(NumRow* num_row, char* line)
+void parse_num_line(NumRow* num_row, const char* line)
 {
-    char* nptr = line;
-    char* endptr = NULL;
+    const char* nptr   = line;
+    char*       endptr = NULL;
 
     while (*nptr) {
         int64_t val = strtoll(nptr, &endptr, 0);
+
         if (nptr != endptr) {
+            if (num_row->len >= num_row->capacity) {
+                die(NULL, "too many numbers in row");
+            }
+
             num_row->numbers[num_row->len] = val;
-            nptr = endptr;
+            nptr                           = endptr;
             num_row->len++;
         }
         else {
@@ -81,7 +89,7 @@ void parse_num_line(NumRow* num_row, char* line)
     }
 }
 
-void print_numbers(Puzzle* p)
+void print_numbers(const Puzzle* p)
 {
     for (int i = 0; i < p->num_rows_len; i++) {
         printf("line %d: ", i + 1);
@@ -94,7 +102,7 @@ void print_numbers(Puzzle* p)
     printf("\n\n");
 }
 
-void print_operators(Puzzle* p)
+void print_operators(const Puzzle* p)
 {
     printf("operators: ");
     for (int i = 0; i < p->op_row.len; i++) {
@@ -103,52 +111,43 @@ void print_operators(Puzzle* p)
     printf("\n\n");
 }
 
-int is_operators_line(char* line)
+int is_operators_line(const char* line)
 {
-    char* p = NULL;
-    int   n;
-
-    n = sscanf(line, "%m[+*]", &p);
-
-    // only free if sscanf is successful
-    if (n == 1) {
-        free(p);
-        return n;
+    while (*line == ' ' || *line == '\t') {
+        line++;
     }
-
-    return n;
+    return *line == '+' || *line == '*';
 }
 
-int is_numbers_line(char* line)
+int is_numbers_line(const char* line)
 {
-    int p;
-    int n;
-    n = sscanf(line, "%u", &p);
-    return n == 1;
+    while (*line == ' ' || *line == '\t') {
+        line++;
+    }
+    return *line >= '0' && *line <= '9';
 }
 
 void puzzle_parse(Puzzle* p)
 {
     char*   lineptr = NULL;
-    size_t  len = 0;
+    size_t  len     = 0;
     ssize_t read;
 
     while ((read = getline(&lineptr, &len, p->file) != -1)) {
 
         if (is_numbers_line(lineptr)) {
-            if (p->num_rows) {
-                NumRow* current = &p->num_rows[p->num_rows_len];
-
-                current->capacity = 4096;
-                current->numbers = malloc(current->capacity * sizeof(int64_t));
-                current->len = 0;
-
-                parse_num_line(current, lineptr);
-                p->num_rows_len++;
+            if (p->num_rows_len >= p->num_rows_capacity) {
+                die(p, "too many numbers rows");
             }
-            else {
-                die(p, "num_rows is not allocated");
-            }
+
+            NumRow* current = &p->num_rows[p->num_rows_len];
+
+            current->len      = 0;
+            current->capacity = 4096;
+            current->numbers  = malloc(current->capacity * sizeof(int64_t));
+
+            parse_num_line(current, lineptr);
+            p->num_rows_len++;
         }
 
         else if (is_operators_line(lineptr)) {
@@ -174,19 +173,21 @@ Puzzle* puzzle_open(char* filename)
 
     p->file = fh;
 
+    p->num_rows_len      = 0;
     p->num_rows_capacity = 4096;
-    p->num_rows = malloc(p->num_rows_capacity * sizeof(NumRow));
+    p->num_rows          = malloc(p->num_rows_capacity * sizeof(NumRow));
+
     if (!p->num_rows) {
         die(p, "could not allocate num_rows");
     }
-    p->num_rows_len = 0;
 
-    p->op_row.capacity = 4096;
+    p->op_row.len       = 0;
+    p->op_row.capacity  = 4096;
     p->op_row.operators = malloc(p->op_row.capacity * sizeof(char));
+
     if (!p->op_row.operators) {
         die(p, "could not allocate operators in op_row");
     }
-    p->op_row.len = 0;
 
     return p;
 }
@@ -194,9 +195,11 @@ Puzzle* puzzle_open(char* filename)
 void puzzle_close(Puzzle* p)
 {
     if (p) {
+
         if (p->file) {
             fclose(p->file);
         }
+
         if (p->num_rows) {
             for (int i = 0; i < p->num_rows_len; i++) {
                 if (p->num_rows[i].numbers) {
@@ -205,22 +208,24 @@ void puzzle_close(Puzzle* p)
             }
             free(p->num_rows);
         }
+
         if (p->op_row.operators) {
             free(p->op_row.operators);
         }
+
         free(p);
     }
 }
 
-int64_t calculate_total(Puzzle* p)
+int64_t calculate_total(const Puzzle* p)
 {
     int64_t res = 0;
 
-    for (int col = 0; col < p->op_row.len; col++) {
+    for (size_t col = 0; col < p->op_row.len; col++) {
         int64_t curr = p->num_rows[0].numbers[col];
 
         char op = p->op_row.operators[col];
-        for (int row = 1; row < p->num_rows_len; row++) {
+        for (size_t row = 1; row < p->num_rows_len; row++) {
             int64_t num = p->num_rows[row].numbers[col];
             if (op == '+') {
                 curr += num;
