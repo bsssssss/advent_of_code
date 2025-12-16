@@ -81,7 +81,7 @@ void parse_num_line(NumRow* num_row, char* line)
     }
 }
 
-void print_numbers(Puzzle* p) 
+void print_numbers(Puzzle* p)
 {
     for (int i = 0; i < p->num_rows_len; i++) {
         printf("line %d: ", i + 1);
@@ -105,11 +105,18 @@ void print_operators(Puzzle* p)
 
 int is_operators_line(char* line)
 {
-    char* p;
+    char* p = NULL;
     int   n;
+
     n = sscanf(line, "%m[+*]", &p);
-    free(p);
-    return n == 1;
+
+    // only free if sscanf is successful
+    if (n == 1) {
+        free(p);
+        return n;
+    }
+
+    return n;
 }
 
 int is_numbers_line(char* line)
