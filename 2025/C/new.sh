@@ -40,4 +40,6 @@ EOF
 
 touch $dirname/input.txt
 
+cp "./utils/dbg.h" $dirname
+
 echo -e "Created Advent of Code challenge in $dirname"
