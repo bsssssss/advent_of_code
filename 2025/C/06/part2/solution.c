@@ -20,7 +20,7 @@ typedef struct {
 
 /*****************************************************************************/
 
-void    read_input_file(Puzzle* pz, char* filename);
+void    read_input_file(Puzzle* p, char* filename);
 void    puzzle_destroy(Puzzle* p);
 Puzzle* puzzle_create(char* filename);
 
@@ -34,7 +34,7 @@ void mk_grid(Puzzle* p)
     }
 }
 
-void read_input_file(Puzzle* pz, char* filename)
+void read_input_file(Puzzle* p, char* filename)
 {
     FILE* fh = fopen(filename, "rb");
     check(fh, "could not open file");
@@ -46,18 +46,18 @@ void read_input_file(Puzzle* pz, char* filename)
     debug("size of %s: %ld bytes", filename, sz);
 
     // + 1 for null byte
-    pz->raw = malloc((sz * sizeof(char)) + 1);
-    check_mem(pz->raw);
+    p->raw = malloc((sz * sizeof(char)) + 1);
+    check_mem(p->raw);
 
-    pz->raw_len          = fread(pz->raw, 1, sz, fh);
-    pz->raw[pz->raw_len] = '\0';
+    p->raw_len          = fread(p->raw, 1, sz, fh);
+    p->raw[p->raw_len] = '\0';
 
     fclose(fh);
     return;
 
 error:
     if (fh) fclose(fh);
-    puzzle_destroy(pz);
+    puzzle_destroy(p);
     return;
 }
 
