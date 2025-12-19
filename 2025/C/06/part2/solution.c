@@ -3,19 +3,24 @@
 #include <stdlib.h>
 
 #define INPUT_FILE "test.txt"
-#define MAX_LEN 4096
+#define MAX_LEN 128
 
 /*****************************************************************************/
 
 typedef struct {
-    char** contents[MAX_LEN][MAX_LEN];
-    size_t len;
+    size_t x;
+    size_t y;
+} Dim;
+
+typedef struct {
+    char contents[MAX_LEN][MAX_LEN];
+    Dim  dim;
 } Grid;
 
 typedef struct {
     char*  raw;
     size_t raw_len;
-    Grid*  grid;
+    Grid   grid;
 } Puzzle;
 
 /*****************************************************************************/
@@ -26,11 +31,27 @@ Puzzle* puzzle_create(char* filename);
 
 /*****************************************************************************/
 
-void mk_grid(Puzzle* p)
+void make_grid(Puzzle* p)
 {
-    char cptr = *p->raw;
-    while (cptr != '\0') {
-        cptr++;
+    char*  c    = p->raw;
+    size_t rows = 0;
+    size_t cols = 0;
+
+    while (*c != '\0') {
+        if (*c == '\n') {
+            p->grid.contents[rows][cols] = '\0';
+            rows++;
+            cols = 0;
+            c++;
+            continue;
+        }
+        p->grid.contents[rows][cols]     = *c;
+        p->grid.contents[rows][cols + 1] = '\0';
+
+        p->grid.dim.y = rows + 1;
+        p->grid.dim.x = cols + 1;
+        cols++;
+        c++;
     }
 }
 
@@ -49,7 +70,7 @@ void read_input_file(Puzzle* p, char* filename)
     p->raw = malloc((sz * sizeof(char)) + 1);
     check_mem(p->raw);
 
-    p->raw_len          = fread(p->raw, 1, sz, fh);
+    p->raw_len         = fread(p->raw, 1, sz, fh);
     p->raw[p->raw_len] = '\0';
 
     fclose(fh);
@@ -78,11 +99,11 @@ Puzzle* puzzle_create(char* filename)
     p->raw     = NULL;
     p->raw_len = 0;
 
-    p->grid      = malloc(sizeof(Grid));
-    p->grid->len = 0;
+    p->grid.dim.x = 0;
+    p->grid.dim.y = 0;
 
     read_input_file(p, filename);
-    mk_grid(p);
+    make_grid(p);
 
     return p;
 
@@ -97,20 +118,16 @@ void puzzle_destroy(Puzzle* p)
         if (p->raw) {
             free(p->raw);
         }
-        if (p->grid) {
-            free(p->grid);
-        }
         free(p);
     }
 }
-
 
 int main(void)
 {
     Puzzle* p = puzzle_create(INPUT_FILE);
     check(p, "failed to create puzzle");
 
-    print_raw(p);
+    // print_raw(p);
 
     puzzle_destroy(p);
     return 0;
