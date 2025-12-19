@@ -1,4 +1,5 @@
 #include "dbg.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,6 +7,12 @@
 #define MAX_LEN 128
 
 /*****************************************************************************/
+
+typedef struct {
+    char    op;
+    int32_t nums[MAX_LEN];
+    size_t  nums_len;
+} Problem;
 
 typedef struct {
     size_t x;
@@ -30,6 +37,84 @@ void    puzzle_destroy(Puzzle* p);
 Puzzle* puzzle_create(char* filename);
 
 /*****************************************************************************/
+
+int32_t calculate_problem(Problem* pb)
+{
+    debug("calculating problem...");
+
+    int32_t res = pb->nums[0];
+    debug("\tnum 0: %d", res);
+
+    for (size_t i = 1; i < pb->nums_len; i++) {
+        int32_t curr = pb->nums[i];
+        debug("\tnum %zu: %d", i, curr);
+
+        if (pb->op == '+') {
+            res += curr;
+        }
+        else if (pb->op == '*') {
+            res *= curr;
+        }
+    }
+    debug("-> %d\n", res);
+    return res;
+}
+
+int32_t calculate(Puzzle* p)
+{
+    int32_t res = 0;
+
+    Problem problems[MAX_LEN];
+    size_t  problems_count = 0;
+
+    size_t curr_nums_len = 0;
+    for (int x = p->grid.dim.x - 1; x >= 0; x--) {
+
+        int32_t curr_num = 0;
+        char    curr_num_str[MAX_LEN];
+        size_t  curr_num_str_len = 0;
+        char    op               = '\0';
+        size_t  empty_cell_count = 0;
+
+        for (int y = 0; y < p->grid.dim.y; y++) {
+
+            char curr_char = p->grid.contents[y][x];
+            if (isdigit(curr_char)) {
+                curr_num_str[curr_num_str_len]     = curr_char;
+                curr_num_str[curr_num_str_len + 1] = '\0';
+                curr_num_str_len++;
+            }
+            else if (curr_char == '+' || curr_char == '*') {
+                op = curr_char;
+            }
+            else if (isblank(curr_char)) {
+                empty_cell_count++;
+            }
+        }
+
+        if (empty_cell_count == p->grid.dim.y) {
+            res += calculate_problem(&problems[problems_count]);
+            problems_count++;
+            curr_nums_len = 0;
+            continue;
+        }
+
+        curr_num = strtol(curr_num_str, NULL, 0);
+        problems[problems_count].nums[curr_nums_len] = curr_num;
+        problems[problems_count].nums_len            = curr_nums_len + 1;
+        problems[problems_count].op                  = op;
+
+        if (x == 0) {
+            res += calculate_problem(&problems[problems_count]);
+            problems_count++;
+            curr_nums_len = 0;
+            continue;
+        }
+
+        curr_nums_len++;
+    }
+    return res;
+}
 
 void make_grid(Puzzle* p)
 {
@@ -85,7 +170,7 @@ error:
 void print_raw(Puzzle* p)
 {
     printf("\n");
-    for (int i = 0; i < p->raw_len; i++) {
+    for (size_t i = 0; i < p->raw_len; i++) {
         printf("%c", p->raw[i]);
     }
     printf("\n");
@@ -128,6 +213,8 @@ int main(void)
     check(p, "failed to create puzzle");
 
     // print_raw(p);
+    int32_t res = calculate(p);
+    printf("result: %d\n", res);
 
     puzzle_destroy(p);
     return 0;
