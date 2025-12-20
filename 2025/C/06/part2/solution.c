@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #define INPUT_FILE "test.txt"
-#define MAX_LEN 128
+#define MAX_LEN 4096
 
 /*****************************************************************************/
 
@@ -66,10 +66,9 @@ int32_t calculate(Puzzle* p)
 
     Problem problems[MAX_LEN];
     size_t  problems_count = 0;
+    size_t  curr_nums_len  = 0;
 
-    size_t curr_nums_len = 0;
     for (int x = p->grid.dim.x - 1; x >= 0; x--) {
-
         int32_t curr_num = 0;
         char    curr_num_str[MAX_LEN];
         size_t  curr_num_str_len = 0;
@@ -77,8 +76,8 @@ int32_t calculate(Puzzle* p)
         size_t  empty_cell_count = 0;
 
         for (int y = 0; y < p->grid.dim.y; y++) {
-
             char curr_char = p->grid.contents[y][x];
+
             if (isdigit(curr_char)) {
                 curr_num_str[curr_num_str_len]     = curr_char;
                 curr_num_str[curr_num_str_len + 1] = '\0';
@@ -118,25 +117,25 @@ int32_t calculate(Puzzle* p)
 
 void make_grid(Puzzle* p)
 {
-    char*  c    = p->raw;
-    size_t rows = 0;
-    size_t cols = 0;
+    char*  curr_char = p->raw;
+    size_t rows      = 0;
+    size_t cols      = 0;
 
-    while (*c != '\0') {
-        if (*c == '\n') {
+    while (*curr_char != '\0') {
+        if (*curr_char == '\n') {
             p->grid.contents[rows][cols] = '\0';
             rows++;
             cols = 0;
-            c++;
+            curr_char++;
             continue;
         }
-        p->grid.contents[rows][cols]     = *c;
+        p->grid.contents[rows][cols]     = *curr_char;
         p->grid.contents[rows][cols + 1] = '\0';
+        p->grid.dim.y                    = rows + 1;
+        p->grid.dim.x                    = cols + 1;
 
-        p->grid.dim.y = rows + 1;
-        p->grid.dim.x = cols + 1;
         cols++;
-        c++;
+        curr_char++;
     }
 }
 
