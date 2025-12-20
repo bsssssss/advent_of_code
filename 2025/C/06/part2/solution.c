@@ -11,13 +11,13 @@
 
 typedef struct {
     char    op;
-    int64_t nums[MAX_LEN];
-    size_t  nums_len;
+    int64_t numbers[MAX_LEN];
+    size_t  numbers_len;
 } Problem;
 
 typedef struct {
-    size_t x;
-    size_t y;
+    size_t col;
+    size_t row;
 } Dim;
 
 typedef struct {
@@ -39,17 +39,11 @@ Puzzle* puzzle_create(char* filename);
 
 /*****************************************************************************/
 
-int64_t calculate_problem(Problem* pb, Puzzle* p)
+int64_t calculate_problem(Problem* pb)
 {
-    debug("calculating problem...");
-
-    int64_t res = pb->nums[0];
-    debug("\tnum 0: %ld", res);
-
-    for (size_t i = 1; i < pb->nums_len; i++) {
-        int64_t curr = pb->nums[i];
-        debug("\tnum %zu: %ld", i, curr);
-
+    int64_t res = pb->numbers[0];
+    for (size_t i = 1; i < pb->numbers_len; i++) {
+        int64_t curr = pb->numbers[i];
         if (pb->op == '+') {
             res += curr;
         }
@@ -57,7 +51,6 @@ int64_t calculate_problem(Problem* pb, Puzzle* p)
             res *= curr;
         }
     }
-    debug("-> %ld\n", res);
     return res;
 }
 
@@ -65,51 +58,41 @@ int64_t calculate(Puzzle* p)
 {
     int64_t res = 0;
 
-    Problem curr_problem;
-    size_t  curr_nums_len  = 0;
+    Problem pb;
+    pb.numbers_len = 0;
 
-    for (int x = p->grid.dim.x - 1; x >= 0; x--) {
-        int64_t curr_num = 0;
-        char    curr_num_str[64];
-        size_t  curr_num_str_len = 0;
-        char    op               = '\0';
-        size_t  empty_cell_count = 0;
+    // iterate over each rows (top to bottom) in each columns (right to left)
+    for (int col = p->grid.dim.col - 1; col >= 0; col--) {
 
-        for (int y = 0; y < p->grid.dim.y; y++) {
-            char curr_char = p->grid.contents[y][x];
+        // placeholder for the column's number
+        char   num_str[64] = { '\0' };
+        size_t num_str_len = 0;
 
+        for (int row = 0; row < p->grid.dim.row; row++) {
+            char curr_char = p->grid.contents[row][col];
             if (isdigit(curr_char)) {
-                curr_num_str[curr_num_str_len]     = curr_char;
-                curr_num_str[curr_num_str_len + 1] = '\0';
-                curr_num_str_len++;
+                num_str[num_str_len] = curr_char;
+                num_str_len++;
             }
             else if (curr_char == '+' || curr_char == '*') {
-                op = curr_char;
-            }
-            else if (isblank(curr_char)) {
-                empty_cell_count++;
+                pb.op = curr_char;
             }
         }
 
-        if (empty_cell_count == p->grid.dim.y) {
-            res += calculate_problem(&curr_problem, p);
-            curr_nums_len = 0;
-            continue;
+        num_str[num_str_len] = '\0';
+
+        char*   endptr = NULL;
+        int64_t num    = strtol(num_str, &endptr, 0);
+
+        if (endptr != num_str) {
+            pb.numbers[pb.numbers_len] = num;
+            pb.numbers_len++;
         }
 
-        char* endptr = NULL;
-        curr_num = strtol(curr_num_str, &endptr, 0);
-        curr_problem.nums[curr_nums_len] = curr_num;
-        curr_problem.nums_len            = curr_nums_len + 1;
-        curr_problem.op                  = op;
-
-        if (x == 0) {
-            res += calculate_problem(&curr_problem, p);
-            curr_nums_len = 0;
-            continue;
+        if (endptr == num_str || col == 0) {
+            res += calculate_problem(&pb);
+            pb.numbers_len = 0;
         }
-
-        curr_nums_len++;
     }
     return res;
 }
@@ -132,8 +115,9 @@ void make_grid(Puzzle* p)
 
         p->grid.contents[rows][cols]     = *curr_char;
         p->grid.contents[rows][cols + 1] = '\0';
-        p->grid.dim.y                    = rows + 1;
-        p->grid.dim.x                    = cols + 1;
+
+        p->grid.dim.row = rows + 1;
+        p->grid.dim.col = cols + 1;
 
         cols++;
         curr_char++;
@@ -184,8 +168,8 @@ Puzzle* puzzle_create(char* filename)
     p->raw     = NULL;
     p->raw_len = 0;
 
-    p->grid.dim.x = 0;
-    p->grid.dim.y = 0;
+    p->grid.dim.col = 0;
+    p->grid.dim.row = 0;
 
     read_input_file(p, filename);
     make_grid(p);
